@@ -109,6 +109,9 @@
     <div class="header">
         <h1>Silverbullet OSINT <span>v1.3</span></h1>
         <p>Master Intelligence Framework // Passive Recon</p>
+        <p style="margin-top: 10px; font-size: 0.8rem; color: #b07c96;">
+            Developed by: <a href="https://t.me/Silverbullets_bot" style="color: var(--danger-color); text-decoration: none;">@Silverbullets_bot</a>
+        </p>
     </div>
 
     <div class="tabs">
@@ -119,6 +122,13 @@
     <div id="content-dork" class="tab-content active">
         <button class="toggle-custom-btn" onclick="toggleCustom()">[+] INJECT CUSTOM PAYLOADS (LOCAL DB)</button>
         <div class="custom-section" id="customPanel">
+            <label>Load Dork Library:</label>
+            <select id="dorkLibrary" onchange="loadLibrary()" style="margin-bottom: 10px;">
+                <option value="">-- Select Category --</option>
+                <option value="auth">Admin & Auth Panels</option>
+                <option value="files">Sensitive Config/Files</option>
+                <option value="backup">Database & Backups</option>
+            </select>
             <label>Enter Custom Dorks (One per line). Use {target} as placeholder.</label>
             <textarea id="customDorks" placeholder="site:{target} ext:env&#10;inurl:admin {target}"></textarea>
             <button class="action-btn" onclick="saveCustomDorks()" style="border-color: var(--danger-color); color: var(--danger-color);">SAVE TO MEMORY</button>
@@ -198,6 +208,21 @@
 </div>
 
 <script>
+    // --- LIBRARY DATA ---
+    const dorkLibrary = {
+        auth: ["inurl:login {target}", "inurl:admin {target}", "intitle:dashboard {target}", "inurl:setup {target}"],
+        files: ["site:{target} ext:env", "site:{target} ext:json", "site:{target} ext:log", "site:{target} ext:yaml"],
+        backup: ["site:{target} ext:sql", "site:{target} ext:bak", "site:{target} ext:zip", "site:{target} ext:tar.gz"]
+    };
+
+    function loadLibrary() {
+        const cat = document.getElementById('dorkLibrary').value;
+        if(cat && dorkLibrary[cat]) {
+            document.getElementById('customDorks').value = dorkLibrary[cat].join('\n');
+            logTerm(`Loaded ${cat} library.`);
+        }
+    }
+
     // --- UI LOGIC ---
     function switchTab(tabId) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
