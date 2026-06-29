@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silverbullet OSINT Framework v1.3</title>
+    <style>
+        :root {
+            /* Cyberpunk Neon Pink Theme */
+            --bg-color: #050204;
+            --panel-color: #11050d;
+            --text-color: #fce8f3;
+            --accent-color: #ff007f;
+            --accent-dim: rgba(255, 0, 127, 0.15);
+            --danger-color: #00f0ff;
+            --danger-dim: rgba(0, 240, 255, 0.15);
+            --border-color: #330b20;
+            --term-bg: #030102;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
+
+        body {
+            background-color: var(--bg-color); color: var(--text-color);
+            display: flex; justify-content: center; align-items: flex-start;
+            min-height: 100vh; padding: 20px 15px;
+            background-image: linear-gradient(rgba(255, 0, 127, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 0, 127, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .container {
+            width: 100%; max-width: 950px;
+            background-color: rgba(17, 5, 13, 0.95);
+            border: 1px solid rgba(255, 0, 127, 0.3); border-radius: 8px;
+            padding: 25px; box-shadow: 0 0 35px rgba(255, 0, 127, 0.15); margin-bottom: 30px;
+        }
+
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 1px dashed var(--border-color); padding-bottom: 15px; }
+        .header h1 { color: var(--accent-color); font-size: 2rem; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 15px rgba(255, 0, 127, 0.6); }
+        .header h1 span { font-size: 0.5em; color: #b07c96; text-shadow: none; vertical-align: middle; }
+        .header p { font-size: 0.85rem; color: #b07c96; margin-top: 5px; }
+
+        /* Navigation Tabs */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        .tab-btn {
+            flex: 1; background-color: #0a0307; border: 1px solid var(--border-color); color: #b07c96;
+            padding: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s; border-radius: 4px;
+        }
+        .tab-btn:hover { background-color: var(--accent-dim); color: var(--accent-color); }
+        .tab-btn.active { background-color: var(--accent-dim); border-color: var(--accent-color); color: var(--accent-color); box-shadow: inset 0 0 10px rgba(255,0,127,0.2); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .controls { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .controls-recon { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 20px; }
+        
+        label { font-size: 0.8rem; display: block; margin-bottom: 8px; color: #b07c96; text-transform: uppercase; letter-spacing: 1px; }
+        input, select, button, textarea {
+            width: 100%; background-color: #080306; border: 1px solid var(--border-color); color: var(--text-color);
+            padding: 12px; border-radius: 4px; font-size: 0.9rem; outline: none; transition: all 0.2s ease;
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--accent-color); box-shadow: 0 0 8px rgba(255, 0, 127, 0.2); }
+        input, textarea { color: var(--accent-color); }
+
+        .btn-primary { background-color: var(--accent-dim); border-color: var(--accent-color); color: var(--accent-color); font-weight: bold; cursor: pointer; }
+        .btn-primary:hover:not(:disabled) { background-color: var(--accent-color); color: #000; box-shadow: 0 0 20px var(--accent-color); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .custom-section { background-color: #0a0307; border: 1px dashed var(--accent-color); padding: 15px; border-radius: 4px; margin-bottom: 20px; display: none; }
+        .custom-section textarea { height: 100px; resize: vertical; margin-bottom: 10px; font-size: 0.8rem; color: #e2b6c9; }
+        .toggle-custom-btn { background: transparent; border: 1px dashed var(--border-color); color: #b07c96; padding: 8px; font-size: 0.75rem; cursor: pointer; margin-bottom: 15px; }
+        .toggle-custom-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
+
+        .results-container { border: 1px solid var(--border-color); background-color: #080306; border-radius: 4px; max-height: 300px; overflow-y: auto; margin-top: 15px; margin-bottom: 15px; display: none; }
+        .dork-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border-color); gap: 15px; }
+        .dork-info { flex-grow: 1; }
+        .dork-meta { font-size: 0.75rem; color: var(--accent-color); margin-bottom: 4px; text-transform: uppercase; }
+        .dork-query { font-size: 0.85rem; color: #e2b6c9; word-break: break-all; }
+
+        /* Recon Table Styles */
+        table { width: 100%; border-collapse: collapse; }
+        th { position: sticky; top: 0; background-color: #11050d; color: var(--accent-color); text-align: left; padding: 12px; border-bottom: 1px solid var(--accent-color); font-size: 0.8rem; letter-spacing: 1px; }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; color: #e2b6c9; }
+        tr:hover td { background-color: rgba(255,0,127,0.05); }
+        td.ip-col { color: var(--danger-color); }
+
+        .action-btn { background-color: #170712; color: var(--text-color); border: 1px solid var(--border-color); padding: 8px 12px; font-size: 0.75rem; cursor: pointer; border-radius: 4px; white-space: nowrap; transition: all 0.2s ease; text-decoration: none; text-align: center; }
+        .action-btn:hover:not(:disabled) { border-color: var(--accent-color); color: var(--accent-color); background-color: rgba(255, 0, 127, 0.1); }
+
+        .bulk-actions { display: flex; flex-direction: column; gap: 10px; background-color: #0a0307; padding: 15px; border: 1px solid var(--border-color); border-radius: 4px; display: none; }
+        .action-btn-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+
+        .terminal { background-color: var(--term-bg); border: 1px solid var(--border-color); border-radius: 4px; padding: 10px; font-size: 0.8rem; height: 150px; overflow-y: auto; color: #b07c96; display: flex; flex-direction: column; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); margin-top: 10px; }
+        .terminal span { color: var(--accent-color); }
+        .terminal .cyan { color: var(--danger-color); }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #050204; }
+        ::-webkit-scrollbar-thumb { background: #330b20; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ff007f; }
+
+        @media (max-width: 768px) { .controls, .controls-recon { grid-template-columns: 1fr; } .dork-item { flex-direction: column; align-items: flex-start; } .dork-item a { width: 100%; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>Silverbullet OSINT <span>v1.3</span></h1>
+        <p>Master Intelligence Framework // Passive Recon</p>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('dork')" id="tab-dork">1. DORK ENGINE</button>
+        <button class="tab-btn" onclick="switchTab('recon')" id="tab-recon">2. PASSIVE RECON</button>
+    </div>
+
+    <div id="content-dork" class="tab-content active">
+        <button class="toggle-custom-btn" onclick="toggleCustom()">[+] INJECT CUSTOM PAYLOADS (LOCAL DB)</button>
+        <div class="custom-section" id="customPanel">
+            <label>Enter Custom Dorks (One per line). Use {target} as placeholder.</label>
+            <textarea id="customDorks" placeholder="site:{target} ext:env&#10;inurl:admin {target}"></textarea>
+            <button class="action-btn" onclick="saveCustomDorks()" style="border-color: var(--danger-color); color: var(--danger-color);">SAVE TO MEMORY</button>
+        </div>
+
+        <div class="controls">
+            <div>
+                <label>Target Domain</label>
+                <input type="text" id="targetInput" placeholder="target.com">
+            </div>
+            <div>
+                <label>Intel Platform</label>
+                <select id="engineSelect">
+                    <option value="google">Google</option>
+                    <option value="duckduckgo">DuckDuckGo</option>
+                    <option value="bing">Bing</option>
+                    <option value="yandex">Yandex</option>
+                    <option value="github">GitHub (Code)</option>
+                    <option value="shodan">Shodan (Ports)</option>
+                </select>
+            </div>
+            <div>
+                <label>Filter Matrix</label>
+                <select id="categorySelect">
+                    <option value="all">ALL PAYLOADS</option>
+                    <option value="custom">MY CUSTOM INJECTS</option>
+                    <option value="config">CONFIG & ENV</option>
+                    <option value="database">SQL & BACKUPS</option>
+                    <option value="logs">LOG FILES</option>
+                    <option value="admin">ADMIN PANELS</option>
+                </select>
+            </div>
+            <div style="display: flex; align-items: flex-end;">
+                <button class="btn-primary" onclick="generateMatrix()">BUILD MATRIX</button>
+            </div>
+        </div>
+
+        <div class="bulk-actions" id="bulkPanel">
+            <div class="action-btn-group">
+                <button class="action-btn" onclick="copyMatrix()">[ COPY ] RAW TXT</button>
+                <button class="action-btn" onclick="exportCSV()">[ EXPORT ] .CSV</button>
+                <button class="action-btn" style="background-color: var(--accent-dim); color: var(--accent-color); border-color: var(--accent-color);" id="runQueueBtn" onclick="executeQueue()">▶ AUTO-RUN QUEUE</button>
+            </div>
+        </div>
+        <div class="results-container" id="resultsBox"></div>
+    </div>
+
+    <div id="content-recon" class="tab-content">
+        <div class="controls-recon">
+            <div>
+                <label>Target Domain (Passive Scan)</label>
+                <input type="text" id="reconTarget" placeholder="e.g., tesla.com">
+            </div>
+            <div style="display: flex; align-items: flex-end;">
+                <button class="btn-primary" id="reconBtn" onclick="runRecon()">SCAN INFRASTRUCTURE</button>
+            </div>
+        </div>
+
+        <div class="bulk-actions" id="reconBulkPanel">
+            <div class="action-btn-group">
+                <button class="action-btn" onclick="exportReconTXT()">[ EXPORT ] FULL MAP (.TXT)</button>
+            </div>
+        </div>
+        
+        <div class="results-container" id="reconResultsBox">
+            <table id="reconTable">
+                <thead><tr><th>SUBDOMAIN</th><th>IP ADDRESS</th></tr></thead>
+                <tbody id="reconTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <label style="margin-top: 10px; display: block; color: #b07c96; font-size: 0.8rem; text-transform: uppercase;">[+] TERMINAL OUTPUT LOG</label>
+    <div class="terminal" id="terminalLog">
+        <div><span class="cyan">[*]</span> Silverbullet OSINT v1.3 online. Systems primed.</div>
+    </div>
+</div>
+
+<script>
+    // --- UI LOGIC ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        document.getElementById(`tab-${tabId}`).classList.add('active');
+        document.getElementById(`content-${tabId}`).classList.add('active');
+        logTerm(`Switched to <span class="cyan">[ ${tabId.toUpperCase()} ENGINE ]</span>`);
+    }
+
+    function logTerm(msg) {
+        const term = document.getElementById('terminalLog');
+        const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+        term.innerHTML += `<div>[${time}] ${msg}</div>`;
+        term.scrollTop = term.scrollHeight;
+    }
+
+    // --- DORK ENGINE LOGIC (TAB 1) ---
+    const defaultTemplates = [
+        { category: 'config', title: 'Exposed Configurations', query: 'site:{target} ext:env OR ext:yaml OR ext:ini OR ext:conf' },
+        { category: 'database', title: 'Database Backups', query: 'site:{target} ext:sql OR ext:dbf OR ext:mdb OR ext:bak' },
+        { category: 'database', title: 'SQL Error Leaks', query: 'site:{target} "SQL syntax error" OR "mysql_fetch_array()"' },
+        { category: 'logs', title: 'System Logs', query: 'site:{target} ext:log OR ext:txt "error" OR "password"' },
+        { category: 'admin', title: 'Admin Panels', query: 'site:{target} inurl:admin OR inurl:login OR inurl:dashboard' }
+    ];
+
+    let customTemplates = [];
+    let currentMatrixData = []; 
+    let currentActiveLinks = [];
+
+    window.onload = () => {
+        const saved = localStorage.getItem('sb_custom_dorks');
+        if (saved) {
+            document.getElementById('customDorks').value = saved;
+            parseCustomDorks(saved);
+        }
+    };
+
+    function toggleCustom() {
+        const panel = document.getElementById('customPanel');
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function saveCustomDorks() {
+        const raw = document.getElementById('customDorks').value;
+        localStorage.setItem('sb_custom_dorks', raw);
+        parseCustomDorks(raw);
+        logTerm(`Custom DB updated: <span class="cyan">${customTemplates.length}</span> payloads loaded.`);
+        toggleCustom();
+    }
+
+    function parseCustomDorks(rawText) {
+        customTemplates = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0).map(q => ({ category: 'custom', title: 'Custom Inject', query: q }));
+    }
+
+    function generateMatrix() {
+        const target = document.getElementById('targetInput').value.trim();
+        const category = document.getElementById('categorySelect').value;
+        const engine = document.getElementById('engineSelect').value;
+        const resultsBox = document.getElementById('resultsBox');
+        
+        if (!target) return logTerm(`<span class="cyan">[ERROR]</span> Target Domain required.`);
+        let cleanTarget = target.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+        
+        resultsBox.innerHTML = ''; currentActiveLinks = []; currentMatrixData = [];
+        let allTemplates = [...defaultTemplates, ...customTemplates];
+        let filtered = category === 'all' ? allTemplates : allTemplates.filter(d => d.category === category);
+
+        logTerm(`Building matrix for <span>${cleanTarget}</span>...`);
+
+        filtered.forEach(item => {
+            const query = item.query.replace(/{target}/g, cleanTarget);
+            let searchUrl = ""; const encQ = encodeURIComponent(query);
+            
+            if (engine === 'google') searchUrl = `https://www.google.com/search?q=${encQ}`;
+            else if (engine === 'duckduckgo') searchUrl = `https://duckduckgo.com/?q=${encQ}`;
+            else if (engine === 'bing') searchUrl = `https://www.bing.com/search?q=${encQ}`;
+            else if (engine === 'github') searchUrl = `https://github.com/search?type=code&q=${encQ}`;
+            else if (engine === 'shodan') searchUrl = `https://www.shodan.io/search?query=${encQ}`;
+            else searchUrl = `https://yandex.com/search/?text=${encQ}`;
+            
+            currentActiveLinks.push(searchUrl);
+            currentMatrixData.push({ Category: item.category.toUpperCase(), Query: query, URL: searchUrl });
+
+            const div = document.createElement('div');
+            div.className = 'dork-item';
+            div.innerHTML = `<div class="dork-info"><div class="dork-meta">[${item.category}] - ${item.title}</div><div class="dork-query">${escapeHtml(query)}</div></div><a href="${searchUrl}" target="_blank" class="action-btn">LAUNCH</a>`;
+            resultsBox.appendChild(div);
+        });
+
+        resultsBox.style.display = 'block'; document.getElementById('bulkPanel').style.display = 'flex';
+        logTerm(`Matrix built: <span>${filtered.length}</span> vectors ready.`);
+    }
+
+    function copyMatrix() {
+        if (!currentMatrixData.length) return;
+        navigator.clipboard.writeText(currentMatrixData.map(d => d.Query).join('\n'));
+        logTerm(`Copied payloads to clipboard.`);
+    }
+
+    function exportCSV() {
+        if (!currentMatrixData.length) return;
+        const csv = "Category,Query,URL\n" + currentMatrixData.map(d => `"${d.Category}","${d.Query.replace(/"/g, '""')}","${d.URL}"`).join("\n");
+        downloadFile(csv, 'SB_Dorks.csv', 'text/csv');
+        logTerm(`Exfiltrated matrix to <span class="cyan">.CSV</span>`);
+    }
+
+    function executeQueue() {
+        if (currentActiveLinks.length === 0) return;
+        const btn = document.getElementById('runQueueBtn');
+        btn.disabled = true; btn.style.opacity = "0.5";
+        let idx = 0;
+        function openNext() {
+            if (idx < currentActiveLinks.length) {
+                window.open(currentActiveLinks[idx], '_blank'); idx++;
+                if (idx < currentActiveLinks.length) {
+                    const d = Math.floor(Math.random() * 4000) + 4000;
+                    logTerm(`Payload <span>${idx}/${currentActiveLinks.length}</span> executed. Wait <span class="cyan">${(d/1000).toFixed(1)}s</span>...`);
+                    setTimeout(openNext, d);
+                } else {
+                    logTerm(`Queue complete.`); btn.disabled = false; btn.style.opacity = "1";
+                }
+            }
+        }
+        openNext();
+    }
+
+    // --- RECON ENGINE LOGIC (TAB 2) ---
+    let reconData = [];
+
+    async function runRecon() {
+        const target = document.getElementById('reconTarget').value.trim();
+        const btn = document.getElementById('reconBtn');
+        const resBox = document.getElementById('reconResultsBox');
+        const tbody = document.getElementById('reconTableBody');
+        
+        if (!target) return logTerm(`<span class="cyan">[ERROR]</span> Target Domain required.`);
+        let cleanTarget = target.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+
+        btn.disabled = true; btn.innerText = "SCANNING...";
+        logTerm(`Initiating passive scan on <span>${cleanTarget}</span>...`);
+        tbody.innerHTML = ''; reconData = [];
+
+        // High-stability developer API proxy configuration
+        const apiUrl = `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent('https://api.hackertarget.com/hostsearch/?q=' + cleanTarget)}`;
+
+        try {
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error("API Node blocked request.");
+            
+            const text = await response.text();
+            if (text.includes('error') || text.trim() === '') throw new Error("No records found or rate limit hit.");
+
+            const lines = text.trim().split('\n');
+            lines.forEach(line => {
+                const parts = line.split(',');
+                if (parts.length === 2) {
+                    reconData.push({ sub: parts[0], ip: parts[1] });
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${escapeHtml(parts[0])}</td><td class="ip-col">${escapeHtml(parts[1])}</td>`;
+                    tbody.appendChild(tr);
+                }
+            });
+
+            resBox.style.display = 'block';
+            document.getElementById('reconBulkPanel').style.display = 'flex';
+            logTerm(`Discovered <span>${reconData.length}</span> infrastructure nodes.`);
+
+        } catch (error) {
+            logTerm(`<span class="cyan">[!]</span> Recon failed: ${error.message}`);
+        }
+        
+        btn.disabled = false; btn.innerText = "SCAN INFRASTRUCTURE";
+    }
+
+    function exportReconTXT() {
+        if (reconData.length === 0) return;
+        let txt = `--- SB INFRASTRUCTURE MAP ---\nTARGET NODES: ${reconData.length}\n\n`;
+        reconData.forEach(d => { txt += `${d.sub.padEnd(40, ' ')} | ${d.ip}\n`; });
+        downloadFile(txt, 'SB_Recon_Map.txt', 'text/plain');
+        logTerm(`Exfiltrated infrastructure map to <span class="cyan">.TXT</span>`);
+    }
+
+    // Utilities
+    function downloadFile(content, name, type) {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([content], { type }));
+        a.download = name; a.click();
+    }
+    function escapeHtml(t) { return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+</script>
+</body>
+</html>
