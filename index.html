@@ -340,33 +340,56 @@
         logTerm(`Initiating passive scan on <span>${cleanTarget}</span>...`);
         tbody.innerHTML = ''; reconData = [];
 
-        // High-stability developer API proxy configuration
-        const apiUrl = `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent('https://api.hackertarget.com/hostsearch/?q=' + cleanTarget)}`;
+        // The target API we want to extract data from
+        const targetApi = `https://api.hackertarget.com/hostsearch/?q=${cleanTarget}`;
 
-        try {
-            const response = await fetch(apiUrl);
-            if (!response.ok) throw new Error("API Node blocked request.");
-            
-            const text = await response.text();
-            if (text.includes('error') || text.trim() === '') throw new Error("No records found or rate limit hit.");
+        // Multi-Node Routing: Array of public CORS proxies to bypass blocks
+        const routingNodes = [
+            `https://corsproxy.io/?${encodeURIComponent(targetApi)}`,
+            `https://api.allorigins.win/raw?url=${encodeURIComponent(targetApi)}`,
+            `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(targetApi)}`
+        ];
 
-            const lines = text.trim().split('\n');
-            lines.forEach(line => {
-                const parts = line.split(',');
-                if (parts.length === 2) {
-                    reconData.push({ sub: parts[0], ip: parts[1] });
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `<td>${escapeHtml(parts[0])}</td><td class="ip-col">${escapeHtml(parts[1])}</td>`;
-                    tbody.appendChild(tr);
+        let success = false;
+
+        // Loop through nodes until one successfully bypasses the firewall block
+        for (let i = 0; i < routingNodes.length; i++) {
+            logTerm(`Connecting via Routing Node <span>0${i+1}</span>...`);
+            try {
+                const response = await fetch(routingNodes[i]);
+                if (!response.ok) throw new Error("Node blocked by target firewall.");
+                
+                const text = await response.text();
+                // Check if API returned an error string or an HTML block page
+                if (text.includes('error') || text.trim() === '' || text.includes('<html>')) {
+                    throw new Error("Rate limit exceeded on this node.");
                 }
-            });
 
-            resBox.style.display = 'block';
-            document.getElementById('reconBulkPanel').style.display = 'flex';
-            logTerm(`Discovered <span>${reconData.length}</span> infrastructure nodes.`);
+                // Success! Parse the data
+                const lines = text.trim().split('\n');
+                lines.forEach(line => {
+                    const parts = line.split(',');
+                    if (parts.length === 2) {
+                        reconData.push({ sub: parts[0], ip: parts[1] });
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `<td>${escapeHtml(parts[0])}</td><td class="ip-col">${escapeHtml(parts[1])}</td>`;
+                        tbody.appendChild(tr);
+                    }
+                });
 
-        } catch (error) {
-            logTerm(`<span class="cyan">[!]</span> Recon failed: ${error.message}`);
+                resBox.style.display = 'block';
+                document.getElementById('reconBulkPanel').style.display = 'flex';
+                logTerm(`Bypass successful! Extracted <span>${reconData.length}</span> infrastructure nodes.`);
+                success = true;
+                break; // Stop looping once we get the data
+
+            } catch (error) {
+                logTerm(`<span class="cyan">[!]</span> Node 0${i+1} failed. Rerouting...`);
+            }
+        }
+
+        if (!success) {
+            logTerm(`<span class="cyan">[!] CRITICAL:</span> All public routing nodes are currently blocked by HackerTarget. Try again later.`);
         }
         
         btn.disabled = false; btn.innerText = "SCAN INFRASTRUCTURE";
