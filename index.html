@@ -503,10 +503,14 @@
         updateStats();
 
         const targetApi = `https://api.hackertarget.com/hostsearch/?q=${cleanTarget}`;
+        
+        // EXPANDED ROUTING NODES FIX
         const routingNodes = [
             `https://corsproxy.io/?${encodeURIComponent(targetApi)}`,
             `https://api.allorigins.win/raw?url=${encodeURIComponent(targetApi)}`,
-            `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(targetApi)}`
+            `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(targetApi)}`,
+            `https://thingproxy.freeboard.io/fetch/${targetApi}`,
+            `https://proxy.cors.sh/${targetApi}`
         ];
 
         let success = false;
