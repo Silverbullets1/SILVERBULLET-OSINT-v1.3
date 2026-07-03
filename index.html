@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Silverbullet OSINT Framework v2.0</title>
+    <title>Silverbullet OSINT Framework v3.0</title>
+    <!-- Load Vis Network for Threat Mapping -->
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
         :root {
             --bg-color: #050204;
@@ -16,6 +18,7 @@
             --border-color: #330b20;
             --term-bg: #030102;
             --success-color: #00ff7f;
+            --warning-color: #ffaa00;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
@@ -29,7 +32,7 @@
         }
 
         .container {
-            width: 100%; max-width: 1000px;
+            width: 100%; max-width: 1100px;
             background-color: rgba(17, 5, 13, 0.95);
             border: 1px solid rgba(255, 0, 127, 0.3); border-radius: 8px;
             padding: 25px; box-shadow: 0 0 35px rgba(255, 0, 127, 0.15); margin-bottom: 30px;
@@ -40,26 +43,28 @@
         .header h1 span { font-size: 0.5em; color: var(--danger-color); text-shadow: 0 0 10px rgba(0, 240, 255, 0.5); vertical-align: middle; border: 1px solid var(--danger-color); padding: 2px 6px; border-radius: 4px; }
         .header p { font-size: 0.85rem; color: #b07c96; margin-top: 5px; }
 
-        /* Stats Dashboard */
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        /* Stats Dashboard (Now 4 Columns) */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
         .stat-box { background: var(--term-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 15px; text-align: center; position: relative; overflow: hidden; }
         .stat-box::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--accent-color); opacity: 0.5; }
         .stat-box.danger::before { background: var(--danger-color); }
-        .stat-box h2 { font-size: 2rem; margin-bottom: 5px; color: var(--text-color); }
+        .stat-box.warning::before { background: var(--warning-color); }
+        .stat-box h2 { font-size: 1.8rem; margin-bottom: 5px; color: var(--text-color); }
         .stat-box.danger h2 { color: var(--danger-color); text-shadow: 0 0 10px rgba(0,240,255,0.4); }
-        .stat-box p { font-size: 0.75rem; color: #b07c96; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-box.warning h2 { color: var(--warning-color); text-shadow: 0 0 10px rgba(255,170,0,0.4); }
+        .stat-box p { font-size: 0.7rem; color: #b07c96; text-transform: uppercase; letter-spacing: 1px; }
 
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
-        .tab-btn { flex: 1; background-color: #0a0307; border: 1px solid var(--border-color); color: #b07c96; padding: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s; border-radius: 4px; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; flex-wrap: wrap; }
+        .tab-btn { flex: 1; min-width: 150px; background-color: #0a0307; border: 1px solid var(--border-color); color: #b07c96; padding: 12px; font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: all 0.2s; border-radius: 4px; }
         .tab-btn:hover { background-color: var(--accent-dim); color: var(--accent-color); }
         .tab-btn.active { background-color: var(--accent-dim); border-color: var(--accent-color); color: var(--accent-color); box-shadow: inset 0 0 10px rgba(255,0,127,0.2); }
 
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        .controls, .controls-recon { display: grid; gap: 15px; margin-bottom: 20px; }
-        .controls { grid-template-columns: 1.5fr 1fr 1fr 1fr; }
-        .controls-recon { grid-template-columns: 2fr 1fr 1fr; }
+        .controls { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .controls-recon { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .controls-archive { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 20px; }
         
         label { font-size: 0.8rem; display: block; margin-bottom: 8px; color: #b07c96; text-transform: uppercase; letter-spacing: 1px; }
         input, select, button, textarea { width: 100%; background-color: #080306; border: 1px solid var(--border-color); color: var(--text-color); padding: 12px; border-radius: 4px; font-size: 0.9rem; outline: none; transition: all 0.2s ease; }
@@ -73,7 +78,7 @@
         .btn-danger { background-color: transparent; border-color: var(--danger-color); color: var(--danger-color); font-weight: bold; cursor: pointer; }
         .btn-danger:hover:not(:disabled) { background-color: var(--danger-dim); box-shadow: 0 0 20px rgba(0, 240, 255, 0.4); }
 
-        .btn-warning { background-color: transparent; border-color: #ffaa00; color: #ffaa00; font-weight: bold; cursor: pointer; }
+        .btn-warning { background-color: transparent; border-color: var(--warning-color); color: var(--warning-color); font-weight: bold; cursor: pointer; }
         .btn-warning:hover:not(:disabled) { background-color: rgba(255, 170, 0, 0.15); box-shadow: 0 0 20px rgba(255, 170, 0, 0.4); }
 
         .custom-section { background-color: #0a0307; border: 1px dashed var(--accent-color); padding: 15px; border-radius: 4px; margin-bottom: 20px; display: none; }
@@ -95,8 +100,9 @@
         
         .ip-col { color: var(--danger-color); }
         .geo-col { color: #b07c96; font-size: 0.75rem; }
+        .url-col { word-break: break-all; font-size: 0.8rem; }
         .intel-tag { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 0.7rem; margin-right: 5px; border: 1px solid; }
-        .intel-ports { color: #ffaa00; border-color: #ffaa00; background: rgba(255,170,0,0.1); }
+        .intel-ports { color: var(--warning-color); border-color: var(--warning-color); background: rgba(255,170,0,0.1); }
         .intel-vuln { color: var(--danger-color); border-color: var(--danger-color); background: rgba(0,240,255,0.1); }
 
         .action-btn { background-color: #170712; color: var(--text-color); border: 1px solid var(--border-color); padding: 8px 12px; font-size: 0.75rem; cursor: pointer; border-radius: 4px; white-space: nowrap; transition: all 0.2s ease; text-decoration: none; text-align: center; }
@@ -105,11 +111,14 @@
         .bulk-actions { display: flex; flex-direction: column; gap: 10px; background-color: #0a0307; padding: 15px; border: 1px solid var(--border-color); border-radius: 4px; display: none; }
         .action-btn-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
 
+        /* Threat Map Graph */
+        #networkMap { width: 100%; height: 450px; background-color: var(--term-bg); border: 1px solid var(--border-color); border-radius: 4px; display: none; }
+
         .terminal { background-color: var(--term-bg); border: 1px solid var(--border-color); border-radius: 4px; padding: 10px; font-size: 0.8rem; height: 180px; overflow-y: auto; color: #b07c96; display: flex; flex-direction: column; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); margin-top: 10px; }
         .terminal-line { margin-bottom: 2px; line-height: 1.3; }
         .terminal span { color: var(--accent-color); }
         .terminal .cyan { color: var(--danger-color); }
-        .terminal .warn { color: #ffaa00; }
+        .terminal .warn { color: var(--warning-color); }
         .terminal .success { color: var(--success-color); }
 
         ::-webkit-scrollbar { width: 8px; }
@@ -117,15 +126,15 @@
         ::-webkit-scrollbar-thumb { background: #330b20; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #ff007f; }
 
-        @media (max-width: 768px) { .controls, .controls-recon { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .controls, .controls-recon, .controls-archive { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: 1fr 1fr; } }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <h1>Silverbullet OSINT <span>v2.0</span></h1>
-        <p>Master Intelligence Framework // Deep Passive Reconnaissance</p>
+        <h1>Silverbullet OSINT <span>v3.0</span></h1>
+        <p>Master Intelligence Suite // Deep Passive Recon & Visual Mapping</p>
         <p style="margin-top: 10px; font-size: 0.8rem; color: #b07c96;">
             Telegram: <a href="https://t.me/Silverbullets_bot" style="color: var(--danger-color); text-decoration: none;">@Silverbullets_bot</a>
         </p>
@@ -145,11 +154,17 @@
             <h2 id="stat-cves">0</h2>
             <p>CVEs Detected</p>
         </div>
+        <div class="stat-box warning">
+            <h2 id="stat-archives">0</h2>
+            <p>Archived URLs</p>
+        </div>
     </div>
 
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('dork')" id="tab-dork">1. DORK ENGINE</button>
-        <button class="tab-btn" onclick="switchTab('recon')" id="tab-recon">2. INFRASTRUCTURE & INTEL</button>
+        <button class="tab-btn" onclick="switchTab('recon')" id="tab-recon">2. INFRASTRUCTURE SCAN</button>
+        <button class="tab-btn" onclick="switchTab('archive')" id="tab-archive">3. ARCHIVE MINER</button>
+        <button class="tab-btn" onclick="switchTab('map')" id="tab-map">4. THREAT MAP</button>
     </div>
 
     <!-- TAB 1: DORK ENGINE -->
@@ -229,6 +244,7 @@
             <div class="action-btn-group">
                 <button class="action-btn btn-warning" id="deepIntelBtn" onclick="runAutomatedDeepIntel()">▶ 3. RUN DEEP INTEL (SHODAN/CVE)</button>
                 <button class="action-btn" onclick="exportMasterReport()">[ EXPORT ] MASTER JSON REPORT</button>
+                <button class="action-btn" style="border-color: var(--accent-color); color: var(--accent-color);" onclick="switchTab('map'); drawThreatMap();">▶ GENERATE THREAT MAP</button>
             </div>
         </div>
         
@@ -238,6 +254,32 @@
                 <tbody id="reconTableBody"></tbody>
             </table>
         </div>
+    </div>
+
+    <!-- TAB 3: ARCHIVE MINER -->
+    <div id="content-archive" class="tab-content">
+        <div class="controls-archive">
+            <div>
+                <label>Target Domain (Wayback Minning)</label>
+                <input type="text" id="archiveTarget" placeholder="e.g., tesla.com">
+            </div>
+            <div style="display: flex; align-items: flex-end;">
+                <button class="btn-warning" id="archiveBtn" onclick="runArchiveMiner()">MINE HISTORICAL URLS</button>
+            </div>
+        </div>
+        
+        <div class="results-container" id="archiveResultsBox">
+            <table id="archiveTable">
+                <thead><tr><th>MIME TYPE</th><th>TIMESTAMP</th><th>HISTORICAL ENDPOINT URL</th></tr></thead>
+                <tbody id="archiveTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 4: THREAT MAP -->
+    <div id="content-map" class="tab-content">
+        <p style="font-size: 0.85rem; color: #b07c96; margin-bottom: 10px;">Visual representation of discovered infrastructure. Drag nodes to explore relationships.</p>
+        <div id="networkMap"></div>
     </div>
 
     <!-- TERMINAL OUT -->
@@ -250,9 +292,11 @@
 
 <script>
     // --- GLOBAL STATE ---
-    let reconData = []; // Holds complex objects: { sub, ip, geo, ports: [], cves: [], checked: false }
-    let globalStats = { assets: 0, ports: 0, cves: 0 };
+    let reconData = []; 
+    let archiveDataDump = [];
     let dnsDataDump = [];
+    let globalStats = { assets: 0, ports: 0, cves: 0, archives: 0 };
+    let activeRootDomain = "";
 
     // --- DORK LIBRARY ---
     const dorkLibrary = {
@@ -272,10 +316,11 @@
     let customTemplates = [];
     let currentMatrixData = []; 
     let currentActiveLinks = [];
+    let network = null;
 
     window.onload = () => {
-        logTermText("[*] Silverbullet OSINT v2.0 Initialized.", "success");
-        logTermText("[*] Geo-Spatial & CVE Subsystems online.");
+        logTermText("[*] Silverbullet OSINT v3.0 Initialized.", "success");
+        logTermText("[*] Threat Mapping & Archive Subsystems online.");
         const saved = localStorage.getItem('sb_custom_dorks');
         if (saved) {
             document.getElementById('customDorks').value = saved;
@@ -287,6 +332,7 @@
         document.getElementById('stat-assets').innerText = globalStats.assets;
         document.getElementById('stat-ports').innerText = globalStats.ports;
         document.getElementById('stat-cves').innerText = globalStats.cves;
+        document.getElementById('stat-archives').innerText = globalStats.archives;
     }
 
     // --- SECURE TERMINAL LOGGING ---
@@ -304,7 +350,6 @@
         term.scrollTop = term.scrollHeight;
     }
 
-    // Helper to log text with optional color class applied to the whole message
     function logTermText(msg, colorClass = null) {
         const line = createTerminalLine();
         if (colorClass) {
@@ -338,6 +383,11 @@
         span.textContent = `[ ${tabId.toUpperCase()} MODULE ]`;
         line.appendChild(span);
         appendTerminalLine(line);
+
+        // Special handling to redraw graph if switching to map tab
+        if(tabId === 'map' && reconData.length > 0) {
+            setTimeout(drawThreatMap, 100);
+        }
     }
 
     // --- DORK ENGINE LOGIC ---
@@ -358,15 +408,7 @@
         const raw = document.getElementById('customDorks').value;
         localStorage.setItem('sb_custom_dorks', raw);
         parseCustomDorks(raw);
-        
-        const line = createTerminalLine();
-        line.appendChild(document.createTextNode("Custom DB updated: "));
-        const span = document.createElement('span');
-        span.className = "cyan";
-        span.textContent = customTemplates.length;
-        line.appendChild(span);
-        line.appendChild(document.createTextNode(" payloads loaded."));
-        appendTerminalLine(line);
+        logTermText(`Custom DB updated: ${customTemplates.length} payloads loaded.`, "cyan");
         toggleCustom();
     }
 
@@ -470,11 +512,10 @@
         btn.disabled = false; btn.style.opacity = "1";
     }
 
-    // --- v2.0 INFRASTRUCTURE & INTEL LOGIC ---
+    // --- v3.0 INFRASTRUCTURE & INTEL LOGIC ---
     
     async function fetchGeoIP(ip) {
         try {
-            // GeoJS is CORS friendly and free without keys
             const res = await fetch(`https://get.geojs.io/v1/ip/geo/${ip}.json`);
             if(!res.ok) return "Geo: Unknown";
             const data = await res.json();
@@ -491,20 +532,19 @@
         const tbody = document.getElementById('reconTableBody');
         
         if (!target) return logTermText("[ERROR] Target Domain required.", "cyan");
-        let cleanTarget = target.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+        activeRootDomain = target.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+        // Populate archive tab automatically
+        document.getElementById('archiveTarget').value = activeRootDomain;
 
         btn.disabled = true; btn.innerText = "SCANNING...";
-        logTermText(`Initiating passive mapping on ${cleanTarget}...`);
+        logTermText(`Initiating passive mapping on ${activeRootDomain}...`);
         
         // Reset state
-        tbody.innerHTML = ''; 
-        reconData = [];
+        tbody.innerHTML = ''; reconData = [];
         globalStats.assets = 0; globalStats.ports = 0; globalStats.cves = 0;
         updateStats();
 
-        const targetApi = `https://api.hackertarget.com/hostsearch/?q=${cleanTarget}`;
-        
-        // EXPANDED ROUTING NODES FIX
+        const targetApi = `https://api.hackertarget.com/hostsearch/?q=${activeRootDomain}`;
         const routingNodes = [
             `https://corsproxy.io/?${encodeURIComponent(targetApi)}`,
             `https://api.allorigins.win/raw?url=${encodeURIComponent(targetApi)}`,
@@ -520,14 +560,13 @@
             logTermText(`Connecting to Routing Node 0${i+1}...`);
             try {
                 const response = await fetch(routingNodes[i]);
-                if (!response.ok) throw new Error("Node communication error.");
+                if (!response.ok) throw new Error("Node error.");
                 const text = await response.text();
                 if (text.includes('error') || text.trim() === '' || text.includes('<html>')) {
-                    throw new Error("Invalid or rate-limited response block.");
+                    throw new Error("Invalid response.");
                 }
                 rawLines = text.trim().split('\n');
-                success = true;
-                break;
+                success = true; break;
             } catch (error) {
                 logTermText(`[!] Node 0${i+1} blocked. Rerouting...`, "warn");
             }
@@ -540,46 +579,28 @@
 
         logTermText(`[+] Subdomains extracted. Resolving Geo-Spatial data...`);
         
-        // Process data and populate UI
         for (let i = 0; i < rawLines.length; i++) {
             const parts = rawLines[i].split(',');
             if (parts.length === 2) {
-                const sub = parts[0];
-                const ip = parts[1];
-                
-                // Fetch Geo IP Passively
+                const sub = parts[0]; const ip = parts[1];
                 const geo = await fetchGeoIP(ip);
                 
-                // Store in v2 data structure
                 const dataObj = { sub, ip, geo, ports: [], cves: [], checked: false, rowId: `row-${i}` };
                 reconData.push(dataObj);
                 globalStats.assets++;
 
-                // Build Table Row
-                const tr = document.createElement('tr');
-                tr.id = dataObj.rowId;
-                
-                const tdSub = document.createElement('td');
-                tdSub.textContent = sub;
+                const tr = document.createElement('tr'); tr.id = dataObj.rowId;
+                const tdSub = document.createElement('td'); tdSub.textContent = sub;
                 
                 const tdIpGeo = document.createElement('td');
-                const ipSpan = document.createElement('div');
-                ipSpan.className = 'ip-col';
-                ipSpan.textContent = ip;
-                const geoSpan = document.createElement('div');
-                geoSpan.className = 'geo-col';
-                geoSpan.textContent = geo;
-                tdIpGeo.appendChild(ipSpan);
-                tdIpGeo.appendChild(geoSpan);
+                const ipSpan = document.createElement('div'); ipSpan.className = 'ip-col'; ipSpan.textContent = ip;
+                const geoSpan = document.createElement('div'); geoSpan.className = 'geo-col'; geoSpan.textContent = geo;
+                tdIpGeo.appendChild(ipSpan); tdIpGeo.appendChild(geoSpan);
                 
-                const tdIntel = document.createElement('td');
-                tdIntel.id = `intel-${i}`;
-                tdIntel.textContent = "Awaiting Scan...";
-                tdIntel.style.color = "#555";
+                const tdIntel = document.createElement('td'); tdIntel.id = `intel-${i}`;
+                tdIntel.textContent = "Awaiting Scan..."; tdIntel.style.color = "#555";
                 
-                tr.appendChild(tdSub);
-                tr.appendChild(tdIpGeo);
-                tr.appendChild(tdIntel);
+                tr.appendChild(tdSub); tr.appendChild(tdIpGeo); tr.appendChild(tdIntel);
                 tbody.appendChild(tr);
             }
         }
@@ -587,6 +608,7 @@
         updateStats();
         resBox.style.display = 'block';
         document.getElementById('reconBulkPanel').style.display = 'flex';
+        document.getElementById('networkMap').style.display = 'block';
         
         logTermText(`Mapping Complete: ${reconData.length} unique assets found.`, "success");
         btn.disabled = false; btn.innerText = "1. MAP INFRASTRUCTURE";
@@ -599,8 +621,6 @@
         btn.disabled = true; btn.innerText = "SCANNING INTERNETDB...";
 
         logTermText(`Initiating automated Deep Intel scan on ${reconData.length} targets...`);
-
-        // We use a Set to avoid querying the same IP multiple times if it shares subdomains
         const processedIps = new Map();
 
         for (let i = 0; i < reconData.length; i++) {
@@ -608,96 +628,65 @@
             const tdIntel = document.getElementById(`intel-${i}`);
             
             if (processedIps.has(node.ip)) {
-                // Already scanned this IP, copy results
                 const cached = processedIps.get(node.ip);
                 node.ports = cached.ports; node.cves = cached.cves; node.checked = true;
                 updateIntelCell(tdIntel, node.ports, node.cves);
                 continue;
             }
 
-            tdIntel.textContent = "Querying Shodan...";
-            tdIntel.style.color = "#ffaa00";
+            tdIntel.textContent = "Querying Shodan..."; tdIntel.style.color = "#ffaa00";
             
             try {
                 const response = await fetch(`https://internetdb.shodan.io/${node.ip}`);
                 if (response.status === 404) {
-                    node.checked = true;
-                    processedIps.set(node.ip, {ports: [], cves: []});
-                    tdIntel.textContent = "No Data Found";
-                    tdIntel.style.color = "#555";
-                    await delay(300); // polite delay
-                    continue;
+                    node.checked = true; processedIps.set(node.ip, {ports: [], cves: []});
+                    tdIntel.textContent = "No Data Found"; tdIntel.style.color = "#555";
+                    await delay(300); continue;
                 }
                 if (!response.ok) throw new Error("API Error");
                 
                 const data = await response.json();
-                node.ports = data.ports || [];
-                node.cves = data.vulns || [];
-                node.checked = true;
-                
+                node.ports = data.ports || []; node.cves = data.vulns || []; node.checked = true;
                 processedIps.set(node.ip, {ports: node.ports, cves: node.cves});
                 
-                globalStats.ports += node.ports.length;
-                globalStats.cves += node.cves.length;
+                globalStats.ports += node.ports.length; globalStats.cves += node.cves.length;
+                updateIntelCell(tdIntel, node.ports, node.cves); updateStats();
                 
-                updateIntelCell(tdIntel, node.ports, node.cves);
-                updateStats();
-                
-                // Print high severity findings to terminal
-                if(node.cves.length > 0) {
-                    logTermText(`[CRITICAL] ${node.ip} has ${node.cves.length} exposed vulnerabilities!`, "cyan");
-                }
-
-                await delay(1000); // 1 sec delay to respect Shodan limits
+                if(node.cves.length > 0) logTermText(`[CRITICAL] ${node.ip} has ${node.cves.length} exposed vulnerabilities!`, "cyan");
+                await delay(1000); 
                 
             } catch (error) {
-                tdIntel.textContent = "Scan Failed";
-                tdIntel.style.color = "var(--danger-color)";
+                tdIntel.textContent = "Scan Failed"; tdIntel.style.color = "var(--danger-color)";
             }
         }
         
-        logTermText("Deep Intel scan complete.", "success");
+        logTermText("Deep Intel scan complete. Threat Map ready for generation.", "success");
         btn.disabled = false; btn.innerText = "▶ 3. RUN DEEP INTEL (SHODAN/CVE)";
     }
 
     function updateIntelCell(cell, ports, cves) {
         cell.innerHTML = '';
         if(ports.length === 0 && cves.length === 0) {
-            cell.textContent = "Clean / No Exposure";
-            cell.style.color = "var(--success-color)";
-            return;
+            cell.textContent = "Clean / No Exposure"; cell.style.color = "var(--success-color)"; return;
         }
-        
         if(ports.length > 0) {
-            const p = document.createElement('span');
-            p.className = 'intel-tag intel-ports';
-            p.textContent = `${ports.length} PORTS`;
-            cell.appendChild(p);
+            const p = document.createElement('span'); p.className = 'intel-tag intel-ports'; p.textContent = `${ports.length} PORTS`; cell.appendChild(p);
         }
-        
         if(cves.length > 0) {
-            const c = document.createElement('span');
-            c.className = 'intel-tag intel-vuln';
-            c.textContent = `${cves.length} CVES`;
-            cell.appendChild(c);
+            const c = document.createElement('span'); c.className = 'intel-tag intel-vuln'; c.textContent = `${cves.length} CVES`; cell.appendChild(c);
         }
     }
 
     async function runDNS() {
-        const target = document.getElementById('reconTarget').value.trim();
-        if (!target) return logTermText("[ERROR] Target Domain required for DNS dump.", "cyan");
-        let cleanTarget = target.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
-
-        logTermText(`Initiating DNS-over-HTTPS lookup for ${cleanTarget}...`);
-        dnsDataDump = []; // clear previous
-        
+        if (!activeRootDomain) return logTermText("[ERROR] Please run Map Infrastructure first.", "cyan");
+        logTermText(`Initiating DNS-over-HTTPS lookup for ${activeRootDomain}...`);
+        dnsDataDump = []; 
         const recordTypes = [{ type: 16, name: 'TXT' }, { type: 15, name: 'MX' }];
         
         for (const record of recordTypes) {
             try {
-                const response = await fetch(`https://dns.google/resolve?name=${cleanTarget}&type=${record.type}`);
+                const response = await fetch(`https://dns.google/resolve?name=${activeRootDomain}&type=${record.type}`);
                 const data = await response.json();
-                
                 if (data.Answer && data.Answer.length > 0) {
                     logTermText(`[+] ${record.name} Records Found:`, "success");
                     data.Answer.forEach(ans => {
@@ -713,30 +702,138 @@
         }
     }
 
+    // --- v3.0 ARCHIVE MINER (WAYBACK CDX API) ---
+    async function runArchiveMiner() {
+        const target = document.getElementById('archiveTarget').value.trim();
+        const btn = document.getElementById('archiveBtn');
+        const resBox = document.getElementById('archiveResultsBox');
+        const tbody = document.getElementById('archiveTableBody');
+        
+        if (!target) return logTermText("[ERROR] Target Domain required for Archive Mining.", "cyan");
+        let cleanTarget = target.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+
+        btn.disabled = true; btn.innerText = "MINING ARCHIVES...";
+        logTermText(`Querying Wayback CDX API for ${cleanTarget}...`);
+        tbody.innerHTML = ''; archiveDataDump = [];
+        globalStats.archives = 0; updateStats();
+
+        // The Wayback CDX API supports CORS. We filter for 200 OK status codes.
+        const cdxApi = `https://web.archive.org/cdx/search/cdx?url=*.${cleanTarget}/*&output=json&fl=original,mimetype,timestamp&filter=statuscode:200&limit=150&collapse=urlkey`;
+
+        try {
+            const response = await fetch(cdxApi);
+            if (!response.ok) throw new Error("Wayback API Error");
+            const data = await response.json();
+            
+            // data[0] is the header row: ["original", "mimetype", "timestamp"]
+            if(data.length > 1) {
+                for(let i = 1; i < data.length; i++) {
+                    const url = data[i][0];
+                    const mime = data[i][1];
+                    const ts = data[i][2];
+                    
+                    archiveDataDump.push({url, mime, ts});
+                    globalStats.archives++;
+                    
+                    const tr = document.createElement('tr');
+                    const tdMime = document.createElement('td'); tdMime.textContent = mime;
+                    // Highlight sensitive mimetypes
+                    if(mime === 'application/json' || mime === 'text/sql' || mime === 'application/pdf' || url.includes('.env')) {
+                        tdMime.style.color = "var(--danger-color)";
+                    }
+                    const tdTs = document.createElement('td'); tdTs.textContent = ts;
+                    const tdUrl = document.createElement('td'); tdUrl.className = "url-col"; 
+                    
+                    const a = document.createElement('a');
+                    a.href = `https://web.archive.org/web/${ts}/${url}`;
+                    a.target = '_blank';
+                    a.style.color = "var(--accent-color)";
+                    a.textContent = url;
+                    tdUrl.appendChild(a);
+
+                    tr.appendChild(tdMime); tr.appendChild(tdTs); tr.appendChild(tdUrl);
+                    tbody.appendChild(tr);
+                }
+                resBox.style.display = 'block';
+                logTermText(`Archive Mining Complete: Found ${archiveDataDump.length} unique historical endpoints.`, "success");
+            } else {
+                logTermText(`[-] No archive data found for ${cleanTarget}.`);
+            }
+        } catch (error) {
+            logTermText(`[!] Failed to connect to Archive API.`, "cyan");
+        }
+        
+        updateStats();
+        btn.disabled = false; btn.innerText = "MINE HISTORICAL URLS";
+    }
+
+    // --- v3.0 VISUAL THREAT MAP (Vis.js) ---
+    function drawThreatMap() {
+        if(reconData.length === 0 || !activeRootDomain) return logTermText("[!] Must Map Infrastructure before generating Threat Map.", "warn");
+        
+        const nodes = new vis.DataSet();
+        const edges = new vis.DataSet();
+        
+        // Add Root Node (Target Domain)
+        nodes.add({ id: 'root', label: activeRootDomain, shape: 'hexagon', color: { background: '#ff007f', border: '#ff007f' }, font: { color: '#ffffff', size: 16 } });
+
+        const uniqueIps = new Set();
+        
+        reconData.forEach((node, index) => {
+            // Add IP Node if not exists
+            if(!uniqueIps.has(node.ip)) {
+                uniqueIps.add(node.ip);
+                // Check if IP has CVEs
+                let ipColor = '#11050d'; let ipBorder = '#00f0ff';
+                if(node.cves && node.cves.length > 0) { ipColor = 'rgba(0, 240, 255, 0.2)'; ipBorder = '#00f0ff'; } // Danger highlighting
+                
+                nodes.add({ id: `ip_${node.ip}`, label: node.ip, shape: 'box', color: { background: ipColor, border: ipBorder }, font: { color: '#00f0ff', size: 12 } });
+                edges.add({ from: 'root', to: `ip_${node.ip}`, color: { color: '#330b20' } });
+            }
+
+            // Add Subdomain Node
+            nodes.add({ id: `sub_${index}`, label: node.sub, shape: 'dot', size: 8, color: { background: '#0a0307', border: '#b07c96' }, font: { color: '#e2b6c9', size: 10 } });
+            edges.add({ from: `ip_${node.ip}`, to: `sub_${index}`, color: { color: '#330b20' } });
+        });
+
+        const container = document.getElementById('networkMap');
+        const data = { nodes: nodes, edges: edges };
+        const options = {
+            nodes: { borderWidth: 2 },
+            edges: { smooth: { type: 'continuous' } },
+            physics: { barnesHut: { gravitationalConstant: -2000, centralGravity: 0.3, springLength: 95 } },
+            interaction: { dragNodes: true, zoomView: true, dragView: true }
+        };
+        
+        if(network !== null) network.destroy();
+        network = new vis.Network(container, data, options);
+        logTermText(`[+] Visual Threat Map generated with ${nodes.length} entities.`, "success");
+    }
+
+    // --- REPORTING EXPORT ---
     function exportMasterReport() {
         if (reconData.length === 0) return logTermText("[!] No mapped assets to export.", "warn");
         
         const report = {
             metadata: {
-                generator: "Silverbullet OSINT Framework v2.0",
+                generator: "Silverbullet OSINT Framework v3.0",
                 timestamp: new Date().toISOString(),
+                target_domain: activeRootDomain,
                 total_assets: globalStats.assets,
                 total_open_ports: globalStats.ports,
-                total_cves: globalStats.cves
+                total_cves: globalStats.cves,
+                total_archives: globalStats.archives
             },
             dns_records: dnsDataDump,
             infrastructure: reconData.map(d => ({
-                subdomain: d.sub,
-                ip_address: d.ip,
-                geo_isp: d.geo,
-                intel_checked: d.checked,
-                open_ports: d.ports,
-                known_cves: d.cves
-            }))
+                subdomain: d.sub, ip_address: d.ip, geo_isp: d.geo,
+                intel_checked: d.checked, open_ports: d.ports, known_cves: d.cves
+            })),
+            archived_endpoints: archiveDataDump
         };
 
         const jsonString = JSON.stringify(report, null, 4);
-        downloadFile(jsonString, 'SB_Master_Intel_Report.json', 'application/json');
+        downloadFile(jsonString, 'SB_Master_Intel_Report_v3.json', 'application/json');
         logTermText(`Exfiltrated Master Intel Report to .JSON`, "success");
     }
 
