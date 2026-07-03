@@ -568,11 +568,9 @@
 
         const targetApi = `https://api.hackertarget.com/hostsearch/?q=${activeRootDomain}`;
         const routingNodes = [
-            `https://corsproxy.io/?${encodeURIComponent(targetApi)}`,
             `https://api.allorigins.win/raw?url=${encodeURIComponent(targetApi)}`,
-            `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(targetApi)}`,
-            `https://thingproxy.freeboard.io/fetch/${targetApi}`,
-            `https://proxy.cors.sh/${targetApi}`
+            `https://corsproxy.io/?${encodeURIComponent(targetApi)}`,
+            `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(targetApi)}`
         ];
 
         let success = false;
@@ -583,20 +581,24 @@
             try {
                 const response = await fetch(routingNodes[i]);
                 if (!response.ok) throw new Error("Node error.");
+                
                 const text = await response.text();
-                if (text.includes('error') || text.trim() === '' || text.includes('<html>')) {
-                    throw new Error("Invalid response.");
+                
+                // STRICT VALIDATION
+                if (text.includes('error') || text.includes('API count exceeded') || text.includes('<html') || !text.includes(',')) {
+                    throw new Error("Rate limit or invalid proxy response.");
                 }
+                
                 rawLines = text.trim().split('\n');
                 success = true; break;
             } catch (error) {
-                logTermText(`[!] Node 0${i+1} blocked. Rerouting...`, "warn");
+                logTermText(`[!] Node 0${i+1} failed or rate-limited. Rerouting...`, "warn");
             }
         }
 
         if (!success) {
             btn.disabled = false; btn.innerText = "1. MAP INFRASTRUCTURE";
-            return logTermText("[!] CRITICAL: All proxies rate-limited. Try again in 5 minutes.", "cyan");
+            return logTermText("[!] CRITICAL: HackerTarget API is currently rate-limiting public proxies. Please try again in 5-10 minutes.", "cyan");
         }
 
         logTermText(`[+] Subdomains extracted. Resolving Geo-Spatial data...`);
