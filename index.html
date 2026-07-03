@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Silverbullet OSINT Framework v1.3</title>
+    <title>Silverbullet OSINT Framework v1.5</title>
     <style>
         :root {
-            /* Cyberpunk Neon Pink Theme */
             --bg-color: #050204;
             --panel-color: #11050d;
             --text-color: #fce8f3;
@@ -40,7 +39,6 @@
         .header h1 span { font-size: 0.5em; color: #b07c96; text-shadow: none; vertical-align: middle; }
         .header p { font-size: 0.85rem; color: #b07c96; margin-top: 5px; }
 
-        /* Navigation Tabs */
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
         .tab-btn {
             flex: 1; background-color: #0a0307; border: 1px solid var(--border-color); color: #b07c96;
@@ -53,7 +51,7 @@
         .tab-content.active { display: block; }
 
         .controls { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .controls-recon { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .controls-recon { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         
         label { font-size: 0.8rem; display: block; margin-bottom: 8px; color: #b07c96; text-transform: uppercase; letter-spacing: 1px; }
         input, select, button, textarea {
@@ -67,9 +65,12 @@
         .btn-primary:hover:not(:disabled) { background-color: var(--accent-color); color: #000; box-shadow: 0 0 20px var(--accent-color); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
+        .btn-danger { background-color: transparent; border-color: var(--danger-color); color: var(--danger-color); font-weight: bold; cursor: pointer; }
+        .btn-danger:hover:not(:disabled) { background-color: var(--danger-dim); box-shadow: 0 0 20px rgba(0, 240, 255, 0.4); }
+
         .custom-section { background-color: #0a0307; border: 1px dashed var(--accent-color); padding: 15px; border-radius: 4px; margin-bottom: 20px; display: none; }
         .custom-section textarea { height: 100px; resize: vertical; margin-bottom: 10px; font-size: 0.8rem; color: #e2b6c9; }
-        .toggle-custom-btn { background: transparent; border: 1px dashed var(--border-color); color: #b07c96; padding: 8px; font-size: 0.75rem; cursor: pointer; margin-bottom: 15px; }
+        .toggle-custom-btn { background: transparent; border: 1px dashed var(--border-color); color: #b07c96; padding: 8px; font-size: 0.75rem; cursor: pointer; margin-bottom: 15px; transition: all 0.2s; }
         .toggle-custom-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
 
         .results-container { border: 1px solid var(--border-color); background-color: #080306; border-radius: 4px; max-height: 300px; overflow-y: auto; margin-top: 15px; margin-bottom: 15px; display: none; }
@@ -78,12 +79,11 @@
         .dork-meta { font-size: 0.75rem; color: var(--accent-color); margin-bottom: 4px; text-transform: uppercase; }
         .dork-query { font-size: 0.85rem; color: #e2b6c9; word-break: break-all; }
 
-        /* Recon Table Styles */
         table { width: 100%; border-collapse: collapse; }
         th { position: sticky; top: 0; background-color: #11050d; color: var(--accent-color); text-align: left; padding: 12px; border-bottom: 1px solid var(--accent-color); font-size: 0.8rem; letter-spacing: 1px; }
         td { padding: 10px 12px; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; color: #e2b6c9; }
         tr:hover td { background-color: rgba(255,0,127,0.05); }
-        td.ip-col { color: var(--danger-color); }
+        td.ip-col { color: var(--danger-color); display: flex; justify-content: space-between; align-items: center; }
 
         .action-btn { background-color: #170712; color: var(--text-color); border: 1px solid var(--border-color); padding: 8px 12px; font-size: 0.75rem; cursor: pointer; border-radius: 4px; white-space: nowrap; transition: all 0.2s ease; text-decoration: none; text-align: center; }
         .action-btn:hover:not(:disabled) { border-color: var(--accent-color); color: var(--accent-color); background-color: rgba(255, 0, 127, 0.1); }
@@ -92,6 +92,7 @@
         .action-btn-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
 
         .terminal { background-color: var(--term-bg); border: 1px solid var(--border-color); border-radius: 4px; padding: 10px; font-size: 0.8rem; height: 150px; overflow-y: auto; color: #b07c96; display: flex; flex-direction: column; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); margin-top: 10px; }
+        .terminal-line { margin-bottom: 2px; }
         .terminal span { color: var(--accent-color); }
         .terminal .cyan { color: var(--danger-color); }
 
@@ -107,16 +108,16 @@
 
 <div class="container">
     <div class="header">
-        <h1>Silverbullet OSINT <span>v1.3</span></h1>
-        <p>Master Intelligence Framework // Passive Recon</p>
+        <h1>Silverbullet OSINT <span>v1.5</span></h1>
+        <p>Master Intelligence Framework // Passive Recon & Vuln Intel</p>
         <p style="margin-top: 10px; font-size: 0.8rem; color: #b07c96;">
-            Developed by: <a href="https://t.me/Silverbullets_bot" style="color: var(--danger-color); text-decoration: none;">@Silverbullets_bot</a>
+            Telegram : <a href="https://t.me/Silverbullets_bot" style="color: var(--danger-color); text-decoration: none;">@Silverbullets_bot</a>
         </p>
     </div>
 
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('dork')" id="tab-dork">1. DORK ENGINE</button>
-        <button class="tab-btn" onclick="switchTab('recon')" id="tab-recon">2. PASSIVE RECON</button>
+        <button class="tab-btn" onclick="switchTab('recon')" id="tab-recon">2. PASSIVE RECON & INTEL</button>
     </div>
 
     <div id="content-dork" class="tab-content active">
@@ -185,6 +186,9 @@
             <div style="display: flex; align-items: flex-end;">
                 <button class="btn-primary" id="reconBtn" onclick="runRecon()">SCAN INFRASTRUCTURE</button>
             </div>
+            <div style="display: flex; align-items: flex-end;">
+                <button class="btn-danger" id="dnsBtn" onclick="runDNS()">DNS TXT/MX DUMP</button>
+            </div>
         </div>
 
         <div class="bulk-actions" id="reconBulkPanel">
@@ -195,51 +199,26 @@
         
         <div class="results-container" id="reconResultsBox">
             <table id="reconTable">
-                <thead><tr><th>SUBDOMAIN</th><th>IP ADDRESS</th></tr></thead>
+                <thead><tr><th>SUBDOMAIN</th><th>IP ADDRESS (CLICK INTEL FOR PASSIVE SCAN)</th></tr></thead>
                 <tbody id="reconTableBody"></tbody>
             </table>
         </div>
     </div>
 
-    <label style="margin-top: 10px; display: block; color: #b07c96; font-size: 0.8rem; text-transform: uppercase;">[+] TERMINAL OUTPUT LOG</label>
-    <div class="terminal" id="terminalLog">
-        <div><span class="cyan">[*]</span> Silverbullet OSINT v1.3 online. Systems primed.</div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; margin-bottom: -5px;">
+        <label style="color: #b07c96; font-size: 0.8rem; text-transform: uppercase; margin: 0;">[+] TERMINAL OUTPUT LOG</label>
+        <button class="toggle-custom-btn" style="margin: 0; padding: 4px 8px; border-color: #330b20;" onclick="clearTerminal()">[ CLEAR BUFFER ]</button>
     </div>
+    <div class="terminal" id="terminalLog"></div>
 </div>
 
 <script>
-    // --- LIBRARY DATA ---
     const dorkLibrary = {
         auth: ["inurl:login {target}", "inurl:admin {target}", "intitle:dashboard {target}", "inurl:setup {target}"],
         files: ["site:{target} ext:env", "site:{target} ext:json", "site:{target} ext:log", "site:{target} ext:yaml"],
         backup: ["site:{target} ext:sql", "site:{target} ext:bak", "site:{target} ext:zip", "site:{target} ext:tar.gz"]
     };
 
-    function loadLibrary() {
-        const cat = document.getElementById('dorkLibrary').value;
-        if(cat && dorkLibrary[cat]) {
-            document.getElementById('customDorks').value = dorkLibrary[cat].join('\n');
-            logTerm(`Loaded ${cat} library.`);
-        }
-    }
-
-    // --- UI LOGIC ---
-    function switchTab(tabId) {
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        document.getElementById(`tab-${tabId}`).classList.add('active');
-        document.getElementById(`content-${tabId}`).classList.add('active');
-        logTerm(`Switched to <span class="cyan">[ ${tabId.toUpperCase()} ENGINE ]</span>`);
-    }
-
-    function logTerm(msg) {
-        const term = document.getElementById('terminalLog');
-        const time = new Date().toLocaleTimeString('en-US', { hour12: false });
-        term.innerHTML += `<div>[${time}] ${msg}</div>`;
-        term.scrollTop = term.scrollHeight;
-    }
-
-    // --- DORK ENGINE LOGIC (TAB 1) ---
     const defaultTemplates = [
         { category: 'config', title: 'Exposed Configurations', query: 'site:{target} ext:env OR ext:yaml OR ext:ini OR ext:conf' },
         { category: 'database', title: 'Database Backups', query: 'site:{target} ext:sql OR ext:dbf OR ext:mdb OR ext:bak' },
@@ -253,6 +232,7 @@
     let currentActiveLinks = [];
 
     window.onload = () => {
+        logTermText("[*] Silverbullet OSINT v1.5 online. Deep Intel Systems primed.");
         const saved = localStorage.getItem('sb_custom_dorks');
         if (saved) {
             document.getElementById('customDorks').value = saved;
@@ -260,6 +240,57 @@
         }
     };
 
+    function loadLibrary() {
+        const cat = document.getElementById('dorkLibrary').value;
+        if(cat && dorkLibrary[cat]) {
+            document.getElementById('customDorks').value = dorkLibrary[cat].join('\n');
+            logTermText(`Loaded ${cat} library.`);
+        }
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        document.getElementById(`tab-${tabId}`).classList.add('active');
+        document.getElementById(`content-${tabId}`).classList.add('active');
+        
+        const line = createTerminalLine();
+        line.appendChild(document.createTextNode("Switched to "));
+        const span = document.createElement('span');
+        span.className = "cyan";
+        span.textContent = `[ ${tabId.toUpperCase()} ENGINE ]`;
+        line.appendChild(span);
+        appendTerminalLine(line);
+    }
+
+    // --- SECURE TERMINAL LOGGING ---
+    function createTerminalLine() {
+        const div = document.createElement('div');
+        div.className = 'terminal-line';
+        const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+        div.appendChild(document.createTextNode(`[${time}] `));
+        return div;
+    }
+
+    function appendTerminalLine(element) {
+        const term = document.getElementById('terminalLog');
+        term.appendChild(element);
+        term.scrollTop = term.scrollHeight;
+    }
+
+    function logTermText(msg) {
+        const line = createTerminalLine();
+        line.appendChild(document.createTextNode(msg));
+        appendTerminalLine(line);
+    }
+
+    function clearTerminal() {
+        const term = document.getElementById('terminalLog');
+        term.innerHTML = '';
+        logTermText("[*] Terminal buffer flushed.");
+    }
+
+    // --- DORK ENGINE LOGIC ---
     function toggleCustom() {
         const panel = document.getElementById('customPanel');
         panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
@@ -269,7 +300,16 @@
         const raw = document.getElementById('customDorks').value;
         localStorage.setItem('sb_custom_dorks', raw);
         parseCustomDorks(raw);
-        logTerm(`Custom DB updated: <span class="cyan">${customTemplates.length}</span> payloads loaded.`);
+        
+        const line = createTerminalLine();
+        line.appendChild(document.createTextNode("Custom DB updated: "));
+        const span = document.createElement('span');
+        span.className = "cyan";
+        span.textContent = customTemplates.length;
+        line.appendChild(span);
+        line.appendChild(document.createTextNode(" payloads loaded."));
+        appendTerminalLine(line);
+        
         toggleCustom();
     }
 
@@ -283,14 +323,29 @@
         const engine = document.getElementById('engineSelect').value;
         const resultsBox = document.getElementById('resultsBox');
         
-        if (!target) return logTerm(`<span class="cyan">[ERROR]</span> Target Domain required.`);
+        if (!target) {
+            const line = createTerminalLine();
+            const span = document.createElement('span');
+            span.className = "cyan";
+            span.textContent = "[ERROR]";
+            line.appendChild(span);
+            line.appendChild(document.createTextNode(" Target Domain required."));
+            return appendTerminalLine(line);
+        }
+        
         let cleanTarget = target.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
         
         resultsBox.innerHTML = ''; currentActiveLinks = []; currentMatrixData = [];
         let allTemplates = [...defaultTemplates, ...customTemplates];
         let filtered = category === 'all' ? allTemplates : allTemplates.filter(d => d.category === category);
 
-        logTerm(`Building matrix for <span>${cleanTarget}</span>...`);
+        const line = createTerminalLine();
+        line.appendChild(document.createTextNode("Building matrix for "));
+        const spanTarget = document.createElement('span');
+        spanTarget.textContent = cleanTarget;
+        line.appendChild(spanTarget);
+        line.appendChild(document.createTextNode("..."));
+        appendTerminalLine(line);
 
         filtered.forEach(item => {
             const query = item.query.replace(/{target}/g, cleanTarget);
@@ -308,48 +363,103 @@
 
             const div = document.createElement('div');
             div.className = 'dork-item';
-            div.innerHTML = `<div class="dork-info"><div class="dork-meta">[${item.category}] - ${item.title}</div><div class="dork-query">${escapeHtml(query)}</div></div><a href="${searchUrl}" target="_blank" class="action-btn">LAUNCH</a>`;
+            
+            const info = document.createElement('div');
+            info.className = 'dork-info';
+            
+            const meta = document.createElement('div');
+            meta.className = 'dork-meta';
+            meta.textContent = `[${item.category}] - ${item.title}`;
+            
+            const qDiv = document.createElement('div');
+            qDiv.className = 'dork-query';
+            qDiv.textContent = query;
+            
+            info.appendChild(meta);
+            info.appendChild(qDiv);
+            
+            const launchBtn = document.createElement('a');
+            launchBtn.className = 'action-btn';
+            launchBtn.href = searchUrl;
+            launchBtn.target = '_blank';
+            launchBtn.textContent = 'LAUNCH';
+            
+            div.appendChild(info);
+            div.appendChild(launchBtn);
             resultsBox.appendChild(div);
         });
 
-        resultsBox.style.display = 'block'; document.getElementById('bulkPanel').style.display = 'flex';
-        logTerm(`Matrix built: <span>${filtered.length}</span> vectors ready.`);
+        resultsBox.style.display = 'block'; 
+        document.getElementById('bulkPanel').style.display = 'flex';
+        
+        const endLine = createTerminalLine();
+        endLine.appendChild(document.createTextNode("Matrix built: "));
+        const spanCount = document.createElement('span');
+        spanCount.textContent = filtered.length;
+        endLine.appendChild(spanCount);
+        endLine.appendChild(document.createTextNode(" vectors ready."));
+        appendTerminalLine(endLine);
     }
 
     function copyMatrix() {
         if (!currentMatrixData.length) return;
         navigator.clipboard.writeText(currentMatrixData.map(d => d.Query).join('\n'));
-        logTerm(`Copied payloads to clipboard.`);
+        logTermText(`Copied payloads to clipboard.`);
     }
 
     function exportCSV() {
         if (!currentMatrixData.length) return;
         const csv = "Category,Query,URL\n" + currentMatrixData.map(d => `"${d.Category}","${d.Query.replace(/"/g, '""')}","${d.URL}"`).join("\n");
         downloadFile(csv, 'SB_Dorks.csv', 'text/csv');
-        logTerm(`Exfiltrated matrix to <span class="cyan">.CSV</span>`);
+        
+        const line = createTerminalLine();
+        line.appendChild(document.createTextNode("Exfiltrated matrix to "));
+        const span = document.createElement('span');
+        span.className = "cyan";
+        span.textContent = ".CSV";
+        line.appendChild(span);
+        appendTerminalLine(line);
     }
 
-    function executeQueue() {
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+
+    async function executeQueue() {
         if (currentActiveLinks.length === 0) return;
         const btn = document.getElementById('runQueueBtn');
-        btn.disabled = true; btn.style.opacity = "0.5";
-        let idx = 0;
-        function openNext() {
-            if (idx < currentActiveLinks.length) {
-                window.open(currentActiveLinks[idx], '_blank'); idx++;
-                if (idx < currentActiveLinks.length) {
-                    const d = Math.floor(Math.random() * 4000) + 4000;
-                    logTerm(`Payload <span>${idx}/${currentActiveLinks.length}</span> executed. Wait <span class="cyan">${(d/1000).toFixed(1)}s</span>...`);
-                    setTimeout(openNext, d);
-                } else {
-                    logTerm(`Queue complete.`); btn.disabled = false; btn.style.opacity = "1";
-                }
+        btn.disabled = true; 
+        btn.style.opacity = "0.5";
+        
+        logTermText("[!] Modern browsers block unprompted background tabs. Ensure popup permissions are enabled.");
+
+        for (let idx = 0; idx < currentActiveLinks.length; idx++) {
+            window.open(currentActiveLinks[idx], '_blank');
+            
+            if (idx < currentActiveLinks.length - 1) {
+                const sleepTime = Math.floor(Math.random() * 4000) + 4000;
+                
+                const line = createTerminalLine();
+                line.appendChild(document.createTextNode("Payload "));
+                const spanIdx = document.createElement('span');
+                spanIdx.textContent = `${idx + 1}/${currentActiveLinks.length}`;
+                line.appendChild(spanIdx);
+                line.appendChild(document.createTextNode(" executed. Wait "));
+                const spanTime = document.createElement('span');
+                spanTime.className = "cyan";
+                spanTime.textContent = `${(sleepTime / 1000).toFixed(1)}s`;
+                line.appendChild(spanTime);
+                line.appendChild(document.createTextNode("..."));
+                appendTerminalLine(line);
+                
+                await delay(sleepTime);
             }
         }
-        openNext();
+        
+        logTermText("Queue complete."); 
+        btn.disabled = false; 
+        btn.style.opacity = "1";
     }
 
-    // --- RECON ENGINE LOGIC (TAB 2) ---
+    // --- RECON & PASSIVE INTEL LOGIC ---
     let reconData = [];
 
     async function runRecon() {
@@ -358,17 +468,30 @@
         const resBox = document.getElementById('reconResultsBox');
         const tbody = document.getElementById('reconTableBody');
         
-        if (!target) return logTerm(`<span class="cyan">[ERROR]</span> Target Domain required.`);
+        if (!target) {
+            const line = createTerminalLine();
+            const span = document.createElement('span');
+            span.className = "cyan";
+            span.textContent = "[ERROR]";
+            line.appendChild(span);
+            line.appendChild(document.createTextNode(" Target Domain required."));
+            return appendTerminalLine(line);
+        }
         let cleanTarget = target.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
 
         btn.disabled = true; btn.innerText = "SCANNING...";
-        logTerm(`Initiating passive scan on <span>${cleanTarget}</span>...`);
+        
+        const startLine = createTerminalLine();
+        startLine.appendChild(document.createTextNode("Initiating passive scan on "));
+        const spanT = document.createElement('span');
+        spanT.textContent = cleanTarget;
+        startLine.appendChild(spanT);
+        startLine.appendChild(document.createTextNode("..."));
+        appendTerminalLine(startLine);
+        
         tbody.innerHTML = ''; reconData = [];
 
-        // The target API we want to extract data from
         const targetApi = `https://api.hackertarget.com/hostsearch/?q=${cleanTarget}`;
-
-        // Multi-Node Routing: Array of public CORS proxies to bypass blocks
         const routingNodes = [
             `https://corsproxy.io/?${encodeURIComponent(targetApi)}`,
             `https://api.allorigins.win/raw?url=${encodeURIComponent(targetApi)}`,
@@ -377,47 +500,174 @@
 
         let success = false;
 
-        // Loop through nodes until one successfully bypasses the firewall block
         for (let i = 0; i < routingNodes.length; i++) {
-            logTerm(`Connecting via Routing Node <span>0${i+1}</span>...`);
+            const nodeLine = createTerminalLine();
+            nodeLine.appendChild(document.createTextNode("Connecting via Routing Node "));
+            const spanNode = document.createElement('span');
+            spanNode.textContent = `0${i+1}`;
+            nodeLine.appendChild(spanNode);
+            nodeLine.appendChild(document.createTextNode("..."));
+            appendTerminalLine(nodeLine);
+            
             try {
                 const response = await fetch(routingNodes[i]);
-                if (!response.ok) throw new Error("Node blocked by target firewall.");
+                if (!response.ok) throw new Error("Node communication error.");
                 
                 const text = await response.text();
-                // Check if API returned an error string or an HTML block page
                 if (text.includes('error') || text.trim() === '' || text.includes('<html>')) {
-                    throw new Error("Rate limit exceeded on this node.");
+                    throw new Error("Invalid or rate-limited response block.");
                 }
 
-                // Success! Parse the data
                 const lines = text.trim().split('\n');
                 lines.forEach(line => {
                     const parts = line.split(',');
                     if (parts.length === 2) {
                         reconData.push({ sub: parts[0], ip: parts[1] });
+                        
                         const tr = document.createElement('tr');
-                        tr.innerHTML = `<td>${escapeHtml(parts[0])}</td><td class="ip-col">${escapeHtml(parts[1])}</td>`;
+                        const tdSub = document.createElement('td');
+                        tdSub.textContent = parts[0];
+                        
+                        const tdIp = document.createElement('td');
+                        tdIp.className = 'ip-col';
+                        
+                        const ipText = document.createElement('span');
+                        ipText.textContent = parts[1];
+                        
+                        const intelBtn = document.createElement('button');
+                        intelBtn.className = 'action-btn';
+                        intelBtn.style.padding = '4px 8px';
+                        intelBtn.style.fontSize = '0.65rem';
+                        intelBtn.textContent = 'INTEL';
+                        intelBtn.onclick = () => fetchIpIntel(parts[1]);
+                        
+                        tdIp.appendChild(ipText);
+                        tdIp.appendChild(intelBtn);
+                        
+                        tr.appendChild(tdSub);
+                        tr.appendChild(tdIp);
                         tbody.appendChild(tr);
                     }
                 });
 
                 resBox.style.display = 'block';
                 document.getElementById('reconBulkPanel').style.display = 'flex';
-                logTerm(`Bypass successful! Extracted <span>${reconData.length}</span> infrastructure nodes.`);
+                
+                const okLine = createTerminalLine();
+                okLine.appendChild(document.createTextNode("Bypass successful! Extracted "));
+                const spanLen = document.createElement('span');
+                spanLen.textContent = reconData.length;
+                okLine.appendChild(spanLen);
+                okLine.appendChild(document.createTextNode(" infrastructure nodes."));
+                appendTerminalLine(okLine);
+                
                 success = true;
-                break; // Stop looping once we get the data
+                break;
 
             } catch (error) {
-                logTerm(`<span class="cyan">[!]</span> Node 0${i+1} failed. Rerouting...`);
+                const failLine = createTerminalLine();
+                const spanWarn = document.createElement('span');
+                spanWarn.className = "cyan";
+                spanWarn.textContent = "[!]";
+                failLine.appendChild(spanWarn);
+                failLine.appendChild(document.createTextNode(` Node 0${i+1} failed. Rerouting...`));
+                appendTerminalLine(failLine);
             }
         }
 
         if (!success) {
-            logTerm(`<span class="cyan">[!] CRITICAL:</span> All public routing nodes are currently blocked by HackerTarget. Try again later.`);
+            const critLine = createTerminalLine();
+            const spanCrit = document.createElement('span');
+            spanCrit.className = "cyan";
+            spanCrit.textContent = "[!] CRITICAL:";
+            critLine.appendChild(spanCrit);
+            critLine.appendChild(document.createTextNode(" All public proxy nodes returned an invalid format or were rate-limited."));
+            appendTerminalLine(critLine);
         }
         
         btn.disabled = false; btn.innerText = "SCAN INFRASTRUCTURE";
+    }
+
+    async function fetchIpIntel(ip) {
+        const line = createTerminalLine();
+        line.appendChild(document.createTextNode("Querying Shodan InternetDB for "));
+        const spanIp = document.createElement('span');
+        spanIp.className = "cyan";
+        spanIp.textContent = ip;
+        line.appendChild(spanIp);
+        line.appendChild(document.createTextNode("..."));
+        appendTerminalLine(line);
+
+        try {
+            const response = await fetch(`https://internetdb.shodan.io/${ip}`);
+            if (response.status === 404) {
+                 return logTermText(`[-] No passive footprint found for ${ip}.`);
+            }
+            if (!response.ok) throw new Error("Network error");
+            
+            const data = await response.json();
+            
+            const ports = data.ports ? data.ports.join(', ') : 'None';
+            const cpes = data.cpes ? data.cpes.length : 0;
+            const vulns = data.vulns ? data.vulns.length : 0;
+            
+            logTermText(`[+] Intel for ${ip}:`);
+            logTermText(`    -> Open Ports: ${ports}`);
+            logTermText(`    -> CPEs Found: ${cpes}`);
+            
+            const vulnLine = createTerminalLine();
+            vulnLine.appendChild(document.createTextNode(`    -> Known CVEs: `));
+            const spanVuln = document.createElement('span');
+            spanVuln.className = vulns > 0 ? "cyan" : "";
+            spanVuln.textContent = vulns;
+            vulnLine.appendChild(spanVuln);
+            appendTerminalLine(vulnLine);
+
+        } catch (error) {
+            logTermText(`[!] Failed to retrieve intel for ${ip}. API might be rate-limited.`);
+        }
+    }
+
+    async function runDNS() {
+        const target = document.getElementById('reconTarget').value.trim();
+        if (!target) {
+            const line = createTerminalLine();
+            const span = document.createElement('span');
+            span.className = "cyan";
+            span.textContent = "[ERROR]";
+            line.appendChild(span);
+            line.appendChild(document.createTextNode(" Target Domain required for DNS dump."));
+            return appendTerminalLine(line);
+        }
+        let cleanTarget = target.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+
+        logTermText(`Initiating DNS-over-HTTPS lookup for ${cleanTarget}...`);
+
+        const recordTypes = [{ type: 16, name: 'TXT' }, { type: 15, name: 'MX' }];
+        
+        for (const record of recordTypes) {
+            try {
+                const response = await fetch(`https://dns.google/resolve?name=${cleanTarget}&type=${record.type}`);
+                const data = await response.json();
+                
+                if (data.Answer && data.Answer.length > 0) {
+                    logTermText(`[+] ${record.name} Records Found:`);
+                    data.Answer.forEach(ans => {
+                        const line = createTerminalLine();
+                        line.appendChild(document.createTextNode(`    -> `));
+                        const spanAns = document.createElement('span');
+                        spanAns.className = "cyan";
+                        spanAns.textContent = ans.data;
+                        line.appendChild(spanAns);
+                        appendTerminalLine(line);
+                    });
+                } else {
+                    logTermText(`[-] No ${record.name} records found.`);
+                }
+            } catch (error) {
+                logTermText(`[!] DNS lookup failed for ${record.name}.`);
+            }
+        }
     }
 
     function exportReconTXT() {
@@ -425,16 +675,21 @@
         let txt = `--- SB INFRASTRUCTURE MAP ---\nTARGET NODES: ${reconData.length}\n\n`;
         reconData.forEach(d => { txt += `${d.sub.padEnd(40, ' ')} | ${d.ip}\n`; });
         downloadFile(txt, 'SB_Recon_Map.txt', 'text/plain');
-        logTerm(`Exfiltrated infrastructure map to <span class="cyan">.TXT</span>`);
+        
+        const line = createTerminalLine();
+        line.appendChild(document.createTextNode("Exfiltrated infrastructure map to "));
+        const span = document.createElement('span');
+        span.className = "cyan";
+        span.textContent = ".TXT";
+        line.appendChild(span);
+        appendTerminalLine(line);
     }
 
-    // Utilities
     function downloadFile(content, name, type) {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([content], { type }));
         a.download = name; a.click();
     }
-    function escapeHtml(t) { return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 </script>
 </body>
 </html>
