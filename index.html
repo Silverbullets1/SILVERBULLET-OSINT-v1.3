@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Silverbullet OSINT Framework v3.0</title>
+    <title>Silverbullet OSINT Framework v3.1</title>
     <!-- Load Vis Network for Threat Mapping -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
@@ -43,7 +43,7 @@
         .header h1 span { font-size: 0.5em; color: var(--danger-color); text-shadow: 0 0 10px rgba(0, 240, 255, 0.5); vertical-align: middle; border: 1px solid var(--danger-color); padding: 2px 6px; border-radius: 4px; }
         .header p { font-size: 0.85rem; color: #b07c96; margin-top: 5px; }
 
-        /* Stats Dashboard (Now 4 Columns) */
+        /* Stats Dashboard */
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
         .stat-box { background: var(--term-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 15px; text-align: center; position: relative; overflow: hidden; }
         .stat-box::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--accent-color); opacity: 0.5; }
@@ -133,7 +133,7 @@
 
 <div class="container">
     <div class="header">
-        <h1>Silverbullet OSINT <span>v3.0</span></h1>
+        <h1>Silverbullet OSINT <span>v3.1</span></h1>
         <p>Master Intelligence Suite // Deep Passive Recon & Visual Mapping</p>
         <p style="margin-top: 10px; font-size: 0.8rem; color: #b07c96;">
             Telegram: <a href="https://t.me/Silverbullets_bot" style="color: var(--danger-color); text-decoration: none;">@Silverbullets_bot</a>
@@ -177,6 +177,7 @@
                 <option value="auth">Admin & Auth Panels</option>
                 <option value="files">Sensitive Config/Files</option>
                 <option value="backup">Database & Backups</option>
+                <option value="cloud">Cloud & Infrastructure</option>
             </select>
             <label>Enter Custom Dorks (One per line). Use {target} as placeholder.</label>
             <textarea id="customDorks" placeholder="site:{target} ext:env&#10;inurl:admin {target}"></textarea>
@@ -298,11 +299,34 @@
     let globalStats = { assets: 0, ports: 0, cves: 0, archives: 0 };
     let activeRootDomain = "";
 
-    // --- DORK LIBRARY ---
+    // --- CURATED MODERN DORK LIBRARY v3.1 ---
     const dorkLibrary = {
-        auth: ["inurl:login {target}", "inurl:admin {target}", "intitle:dashboard {target}", "inurl:setup {target}"],
-        files: ["site:{target} ext:env", "site:{target} ext:json", "site:{target} ext:log", "site:{target} ext:yaml", "site:{target} ext:git"],
-        backup: ["site:{target} ext:sql", "site:{target} ext:bak", "site:{target} ext:zip", "site:{target} ext:tar.gz"]
+        auth: [
+            "site:{target} inurl:admin OR inurl:login OR inurl:dashboard",
+            "site:{target} intitle:\"Remote Desktop Web Connection\"",
+            "site:{target} intitle:\"index of\" intext:htpasswd",
+            "site:{target} inurl:wp-login.php OR inurl:wp-admin",
+            "site:{target} intext:\"Choose a password\" OR intext:\"Forgot password\""
+        ],
+        files: [
+            "site:{target} ext:env OR ext:yaml OR ext:ini OR ext:conf",
+            "site:{target} ext:pem OR ext:key OR ext:rsa OR ext:crt",
+            "site:{target} inurl:\".git\" intitle:\"index of\"",
+            "site:{target} ext:log intext:password OR intext:error",
+            "site:{target} ext:json inurl:config"
+        ],
+        backup: [
+            "site:{target} ext:sql OR ext:bak OR ext:dbf",
+            "site:{target} ext:db OR ext:sqlite OR ext:sqlite3",
+            "site:{target} ext:zip OR ext:tar.gz OR ext:tgz inurl:backup",
+            "site:{target} intext:\"sql syntax near\" OR intext:\"mysql_fetch\""
+        ],
+        cloud: [
+            "site:s3.amazonaws.com \"{target}\"",
+            "site:blob.core.windows.net \"{target}\"",
+            "site:{target} intitle:\"phpinfo()\" OR intext:\"_SERVER[\\\"DOCUMENT_ROOT\\\"]\"",
+            "site:{target} \"Index of /\" \"parent directory\""
+        ]
     };
 
     const defaultTemplates = [
@@ -319,7 +343,8 @@
     let network = null;
 
     window.onload = () => {
-        logTermText("[*] Silverbullet OSINT v3.0 Initialized.", "success");
+        logTermText("[*] Silverbullet OSINT v3.1 Initialized.", "success");
+        logTermText("[!] DISCLAIMER: All intelligence gathering must be for authorized educational purposes only.", "warn");
         logTermText("[*] Threat Mapping & Archive Subsystems online.");
         const saved = localStorage.getItem('sb_custom_dorks');
         if (saved) {
@@ -384,7 +409,6 @@
         line.appendChild(span);
         appendTerminalLine(line);
 
-        // Special handling to redraw graph if switching to map tab
         if(tabId === 'map' && reconData.length > 0) {
             setTimeout(drawThreatMap, 100);
         }
@@ -512,7 +536,7 @@
         btn.disabled = false; btn.style.opacity = "1";
     }
 
-    // --- v3.0 INFRASTRUCTURE & INTEL LOGIC ---
+    // --- v3.1 INFRASTRUCTURE & INTEL LOGIC ---
     
     async function fetchGeoIP(ip) {
         try {
@@ -533,13 +557,11 @@
         
         if (!target) return logTermText("[ERROR] Target Domain required.", "cyan");
         activeRootDomain = target.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
-        // Populate archive tab automatically
         document.getElementById('archiveTarget').value = activeRootDomain;
 
         btn.disabled = true; btn.innerText = "SCANNING...";
         logTermText(`Initiating passive mapping on ${activeRootDomain}...`);
         
-        // Reset state
         tbody.innerHTML = ''; reconData = [];
         globalStats.assets = 0; globalStats.ports = 0; globalStats.cves = 0;
         updateStats();
@@ -702,7 +724,7 @@
         }
     }
 
-    // --- v3.0 ARCHIVE MINER (WAYBACK CDX API) ---
+    // --- v3.1 ARCHIVE MINER (WAYBACK CDX API) ---
     async function runArchiveMiner() {
         const target = document.getElementById('archiveTarget').value.trim();
         const btn = document.getElementById('archiveBtn');
@@ -717,7 +739,6 @@
         tbody.innerHTML = ''; archiveDataDump = [];
         globalStats.archives = 0; updateStats();
 
-        // The Wayback CDX API supports CORS. We filter for 200 OK status codes.
         const cdxApi = `https://web.archive.org/cdx/search/cdx?url=*.${cleanTarget}/*&output=json&fl=original,mimetype,timestamp&filter=statuscode:200&limit=150&collapse=urlkey`;
 
         try {
@@ -725,19 +746,14 @@
             if (!response.ok) throw new Error("Wayback API Error");
             const data = await response.json();
             
-            // data[0] is the header row: ["original", "mimetype", "timestamp"]
             if(data.length > 1) {
                 for(let i = 1; i < data.length; i++) {
-                    const url = data[i][0];
-                    const mime = data[i][1];
-                    const ts = data[i][2];
-                    
+                    const url = data[i][0]; const mime = data[i][1]; const ts = data[i][2];
                     archiveDataDump.push({url, mime, ts});
                     globalStats.archives++;
                     
                     const tr = document.createElement('tr');
                     const tdMime = document.createElement('td'); tdMime.textContent = mime;
-                    // Highlight sensitive mimetypes
                     if(mime === 'application/json' || mime === 'text/sql' || mime === 'application/pdf' || url.includes('.env')) {
                         tdMime.style.color = "var(--danger-color)";
                     }
@@ -746,9 +762,7 @@
                     
                     const a = document.createElement('a');
                     a.href = `https://web.archive.org/web/${ts}/${url}`;
-                    a.target = '_blank';
-                    a.style.color = "var(--accent-color)";
-                    a.textContent = url;
+                    a.target = '_blank'; a.style.color = "var(--accent-color)"; a.textContent = url;
                     tdUrl.appendChild(a);
 
                     tr.appendChild(tdMime); tr.appendChild(tdTs); tr.appendChild(tdUrl);
@@ -767,31 +781,27 @@
         btn.disabled = false; btn.innerText = "MINE HISTORICAL URLS";
     }
 
-    // --- v3.0 VISUAL THREAT MAP (Vis.js) ---
+    // --- v3.1 VISUAL THREAT MAP (Vis.js) ---
     function drawThreatMap() {
         if(reconData.length === 0 || !activeRootDomain) return logTermText("[!] Must Map Infrastructure before generating Threat Map.", "warn");
         
         const nodes = new vis.DataSet();
         const edges = new vis.DataSet();
         
-        // Add Root Node (Target Domain)
         nodes.add({ id: 'root', label: activeRootDomain, shape: 'hexagon', color: { background: '#ff007f', border: '#ff007f' }, font: { color: '#ffffff', size: 16 } });
 
         const uniqueIps = new Set();
         
         reconData.forEach((node, index) => {
-            // Add IP Node if not exists
             if(!uniqueIps.has(node.ip)) {
                 uniqueIps.add(node.ip);
-                // Check if IP has CVEs
                 let ipColor = '#11050d'; let ipBorder = '#00f0ff';
-                if(node.cves && node.cves.length > 0) { ipColor = 'rgba(0, 240, 255, 0.2)'; ipBorder = '#00f0ff'; } // Danger highlighting
+                if(node.cves && node.cves.length > 0) { ipColor = 'rgba(0, 240, 255, 0.2)'; ipBorder = '#00f0ff'; } 
                 
                 nodes.add({ id: `ip_${node.ip}`, label: node.ip, shape: 'box', color: { background: ipColor, border: ipBorder }, font: { color: '#00f0ff', size: 12 } });
                 edges.add({ from: 'root', to: `ip_${node.ip}`, color: { color: '#330b20' } });
             }
 
-            // Add Subdomain Node
             nodes.add({ id: `sub_${index}`, label: node.sub, shape: 'dot', size: 8, color: { background: '#0a0307', border: '#b07c96' }, font: { color: '#e2b6c9', size: 10 } });
             edges.add({ from: `ip_${node.ip}`, to: `sub_${index}`, color: { color: '#330b20' } });
         });
@@ -816,7 +826,7 @@
         
         const report = {
             metadata: {
-                generator: "Silverbullet OSINT Framework v3.0",
+                generator: "Silverbullet OSINT Framework v3.1",
                 timestamp: new Date().toISOString(),
                 target_domain: activeRootDomain,
                 total_assets: globalStats.assets,
